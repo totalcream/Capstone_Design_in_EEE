@@ -4,8 +4,18 @@
 - **이 폴더는 uv로 관리되고 있습니다.**
 - **python Ver. 3.11**
 
+### 2. 사용법
+- **data폴더를 생성 후 과목 별 csv파일을 넣는다.**
+- **main.py 파일을 실행**
+- ```bash
+  uv run main.py
+
 ### 2. `main.py`
-- **csv파일을 하나로 합치는 파이썬 코드.**
+- **과목 별 csv파일을 하나로 합치는 파이썬 코드.**
+
+### 2. `prepare_dataset.py`
+- **HugingFace Datasets를 사용해서 arrow폴더 생성.**
+- **`combined_all_questions.csv`사용**
 
 ### 3. `data/`
 - **이 폴더는 `gitignore`됨.**
