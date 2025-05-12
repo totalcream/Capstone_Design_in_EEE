@@ -1,6 +1,7 @@
 import pandas as pd
-from datasets import Dataset, DatasetDict  # DatasetDict는 현재 코드에서 직접 사용되진 않지만, 일반적인 임포트
+from datasets import Dataset, DatasetDict, load_from_disk # DatasetDict 추가
 import os
+import math # 비율 계산을 위해 추가 (필요 없을 수도 있음)
 
 
 # 전역 스코프에 함수 정의
@@ -180,26 +181,73 @@ def load_and_process_csv(csv_file_path: str) -> Dataset | None:
     hf_dataset = Dataset.from_list(formatted_texts)
     return hf_dataset
 
-
 def main():
-    # ... (main 함수 내용은 이전과 동일) ...
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    combined_csv_path = os.path.join('data', 'combined_all_questions.csv')  # 경로 확인 필요
+    """
+    메인 실행 함수.
+    CSV 로드, 데이터 가공, 데이터셋 분할 및 저장 수행.
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in locals() else '.' # 스크립트 위치 기준
+    combined_csv_path = os.path.join('data', 'combined_all_questions.csv')
     print(f"처리할 CSV 파일 경로: {combined_csv_path}")
 
+    # 1. CSV 로드 및 데이터 가공하여 단일 Dataset 생성
     hf_dataset = load_and_process_csv(combined_csv_path)
 
     if hf_dataset:
-        print("\n--- Hugging Face Dataset 정보 ---")
+        print("\n--- Hugging Face Dataset 정보 (분할 전) ---")
         print(hf_dataset)
-        print("\n--- 데이터셋 샘플 (처음 3개) ---")
-        for i in range(min(3, len(hf_dataset))):
-            print(f"\n--- 샘플 {i + 1} ---")
-            print(hf_dataset[i]['text'])
-        output_dataset_path = os.path.join('data', 'prepared_finetuning_dataset_arrow')
-        hf_dataset.save_to_disk(output_dataset_path)
-        print(f"\n처리된 데이터셋이 Arrow 형식으로 '{output_dataset_path}'에 저장되었습니다.")
+        print("\n--- 데이터셋 샘플 (처음 1개) ---")
+        if len(hf_dataset) > 0:
+            print(hf_dataset[0]['text'])
+        else:
+            print("생성된 데이터셋이 비어있습니다.")
+            return # 비어있으면 분할 불가
 
+        # --- 2. 데이터셋 분할 (60% train, 30% validation, 10% test) ---
+        print("\n--- 데이터셋 분할 시작 (60% train, 30% validation, 10% test) ---")
+
+        # 2-1. 먼저 test 셋(10%) 분리
+        # train_test_split은 기본적으로 'train', 'test' 키를 가진 DatasetDict를 반환
+        temp_and_test_split = hf_dataset.train_test_split(test_size=0.1, shuffle=True, seed=42) # shuffle=True로 섞어줌
+        test_dataset = temp_and_test_split['test']     # 최종 test set (10%)
+        temp_train_val_dataset = temp_and_test_split['train'] # 나머지 90% (train + validation 용도)
+
+        print(f" - 1차 분할 완료: 임시 학습/검증셋 {len(temp_train_val_dataset)}개, 테스트셋 {len(test_dataset)}개")
+
+        # 2-2. 나머지 90%에서 validation 셋(원본의 30%) 분리
+        # 90% 중에서 30%를 validation으로 가져가야 함. 비율 = (원하는 크기) / (현재 크기) = 0.3 / 0.9 = 1/3
+        validation_split_ratio = 0.3 / (1.0 - 0.1) # 0.3 / 0.9 = 1/3
+        # validation_split_ratio = 1/3 # 간단히 이렇게 써도 됨
+
+        train_and_val_split = temp_train_val_dataset.train_test_split(test_size=validation_split_ratio, shuffle=True, seed=42)
+        train_dataset = train_and_val_split['train']      # 최종 train set (60%)
+        validation_dataset = train_and_val_split['test'] # 최종 validation set (30%)
+
+        print(f" - 2차 분할 완료: 최종 학습셋 {len(train_dataset)}개, 검증셋 {len(validation_dataset)}개")
+
+        # 3. 최종 분할된 데이터셋을 하나의 DatasetDict로 묶기 (선택적이지만 관리 용이)
+        final_dataset_dict = DatasetDict({
+            'train': train_dataset,
+            'validation': validation_dataset,
+            'test': test_dataset
+        })
+
+        print("\n--- 최종 분할된 데이터셋 정보 ---")
+        print(final_dataset_dict)
+
+        # --- 4. 분할된 데이터셋 저장 ---
+        # 각 스플릿(train, validation, test)이 하위 폴더로 저장됨
+        output_splits_directory = os.path.join('data', 'prepared_finetuning_dataset_splits_arrow')
+        try:
+            # DatasetDict 객체 자체를 저장하면 내부적으로 각 스플릿을 저장함
+            final_dataset_dict.save_to_disk(output_splits_directory)
+            print(f"\n분할된 데이터셋(train, validation, test)이 '{output_splits_directory}'에 성공적으로 저장되었습니다.")
+            print("각 스플릿은 해당 디렉토리 내의 하위 폴더에 저장됩니다 (예: train/, validation/, test/).")
+        except Exception as e:
+            print(f"\n분할된 데이터셋 저장 중 오류 발생: {e}")
+
+    else:
+        print("데이터셋 생성에 실패하여 분할 및 저장을 진행할 수 없습니다.")
 
 if __name__ == "__main__":
     main()
