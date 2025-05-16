@@ -1,0 +1,107 @@
+/* 기본 App 스타일 유지 */
+.App {
+  text-align: center;
+  padding: 20px;
+}
+.subject-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.input-form textarea {
+  width: 70%;
+  height: 200px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+.input-form button {
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.input-form button:hover {
+  background-color: #45a049;
+}
+
+/* 새로운 레이아웃 및 스타일 */
+.response-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+}
+.response-left,
+.response-right {
+  width: 45%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f4f4f4;
+  position: relative;
+}
+.response-left .response-label,
+.response-right .response-label {
+  position: absolute;
+  top: -20px;
+  left: 10px;
+  font-weight: bold;
+  color: #333;
+  background-color: #fff;
+  padding: 5px;
+  border-radius: 5px;
+}
+.response-left button,
+.response-right button {
+  margin-top: 10px;
+  width: 100%;
+}
+.response-left button:hover,
+.response-right button:hover {
+  background-color: #45a049;
+}
+
+/* 선택된 응답 스타일 */
+.selected-response {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #e2e2e2;
+  border-radius: 5px;
+  position: relative;
+}
+.selected-response .response-label {
+  position: absolute;
+  top: -20px;
+  left: 10px;
+  font-weight: bold;
+  color: #333;
+  background-color: #fff;
+  padding: 5px;
+  border-radius: 5px;
+}
+.selected-response textarea {
+  width: 70%;
+  height: 100px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* 버튼 공통 스타일 */
+button {
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #45a049;
+}
