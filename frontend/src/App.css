@@ -93,6 +93,12 @@
   border-radius: 5px;
 }
 
+/* ✅ 추가된 해설 텍스트 스타일 */
+.selected-response p {
+  color: #111;  /* 해설, 정답 등 텍스트를 더 진하게 */
+}
+
+
 /* 버튼 공통 스타일 */
 button {
   padding: 10px;
